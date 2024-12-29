@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JAYA MAKMUR</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .product-card {
+      position: relative;
+      margin-bottom: 20px;
+    }
+    .input-quantity {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 60px;
+    }
+    .cart-summary {
+      position: sticky;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      padding: 15px;
+      border-top: 1px solid #ddd;
+      border-radius: 5px 5px 0 0;
+      background-color: #f9f9f9;
+      z-index: 10;
+      box-shadow: 0px -3px 10px rgba(0, 0, 0, 0.1); /* Menambahkan bayangan agar keranjang lebih terlihat */
+    }
+
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .cart-item button {
+      font-size: 14px;
+      padding: 0 5px;
+      background-color: red;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    /* Menambahkan style untuk tombol tutup */
+    .close-btn {
+      background-color: #f8f9fa;
+      border: 1px solid #ddd;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container mt-5">
+    <h1 class="text-center mb-4">JAYA MAKMUR</h1>
+    
+    <!-- Input Pencarian -->
+    <div class="mb-3">
+      <input type="text" id="search" class="form-control" placeholder="Cari Barang..." oninput="filterProducts()">
+    </div>
+
+    <div class="row" id="product-list">
+      <!-- Barang 1 -->
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3 product-item">
+        <div class="card product-card">
+          <div class="card-body">
+            <h5 class="card-title">mentega</h5>
+            <input type="number" id="qty-barang1" class="form-control input-quantity" placeholder="Qty" min="1" value="0" oninput="updateCart(1, 'Barang 1', 5500)" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Barang 2 -->
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3 product-item">
+        <div class="card product-card">
+          <div class="card-body">
+            <h5 class="card-title">blueband</h5>
+            <input type="number" id="qty-barang2" class="form-control input-quantity" placeholder="Qty" min="1" value="0" oninput="updateCart(2, 'Barang 2', 10000)" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Barang 3 -->
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3 product-item">
+        <div class="card product-card">
+          <div class="card-body">
+            <h5 class="card-title">simas</h5>
+            <input type="number" id="qty-barang3" class="form-control input-quantity" placeholder="Qty" min="1" value="0" oninput="updateCart(3, 'Barang 3', 6500)" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Barang 4 -->
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3 product-item">
+        <div class="card product-card">
+          <div class="card-body">
+            <h5 class="card-title">tepung cakra</h5>
+            <input type="number" id="qty-barang4" class="form-control input-quantity" placeholder="Qty" min="1" value="0" oninput="updateCart(4, 'Barang 4', 5000)" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Barang 5 -->
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3 product-item">
+        <div class="card product-card">
+          <div class="card-body">
+            <h5 class="card-title">mika</h5>
+            <input type="number" id="qty-barang5" class="form-control input-quantity" placeholder="Qty" min="1" value="0" oninput="updateCart(5, 'Barang 5', 100)" />
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Keranjang dan Total Pembelian -->
+  <div class="cart-summary">
+    <h4>Keranjang Belanja</h4>
+    <ul id="cart-items" class="list-unstyled"></ul>
+    <div class="d-flex justify-content-between">
+      <strong>Total Pembelian:</strong>
+      <span id="total-price">Rp 0</span>
+    </div>
+    <div class="d-flex justify-content-between mt-2">
+      <button class="btn btn-primary" onclick="showPaymentInput()">Input Uang Pembeli</button>
+      <span id="change-display" class="d-none">Kembalian: Rp 0</span>
+    </div>
+
+    <!-- Input Uang Pembeli -->
+    <div id="payment-section" class="mt-3 d-none">
+      <label for="payment" class="form-label">Uang Pembeli</label>
+      <input type="number" id="payment" class="form-control" placeholder="Masukkan Uang Pembeli" oninput="calculateChange()" />
+      <button class="close-btn mt-2" onclick="closePaymentInput()">Tutup</button>
+    </div>
+
+  </div>
+
+  <!-- Bootstrap 5 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+
+  <script>
+    let cart = [];
+
+    // Fungsi untuk mengupdate keranjang
+    function updateCart(id, name, price) {
+      const qty = document.getElementById(`qty-barang${id}`).value;
+      const quantity = parseInt(qty);
+      let finalPrice = 0;
+
+      // Cek jika id adalah barang 5
+      if (id === 5) {
+        if (quantity >= 25) {
+          const kelipatan25 = Math.floor(quantity / 25); // Hitung kelipatan 25
+          const sisaBarang = quantity % 25; // Sisa barang yang tidak mencapai kelipatan 25
+          finalPrice = (kelipatan25 * 1500) + (sisaBarang * 100); // Rp 6000 untuk setiap kelipatan 25, Rp 150 untuk sisa barang
+        } else {
+          finalPrice = quantity * 100; // Harga per barang jika kurang dari 25
+        }
+      } else {
+        finalPrice = quantity * price; // Untuk barang selain barang 5
+      }
+
+      // Jika input jumlah lebih dari 0, tambahkan atau update ke keranjang
+      if (quantity > 0) {
+        const existingItem = cart.find(item => item.id === id);
+        if (existingItem) {
+          existingItem.quantity = quantity;  // Update jumlah barang
+          existingItem.finalPrice = finalPrice;  // Update harga
+        } else {
+          cart.push({ id, name, price, quantity, finalPrice });
+        }
+      } else {
+        // Jika jumlah barang 0, hapus dari keranjang
+        cart = cart.filter(item => item.id !== id);
+      }
+
+      displayCart();
+    }
+
+    // Fungsi untuk menampilkan keranjang belanja
+    function displayCart() {
+      const cartItems = document.getElementById('cart-items');
+      const totalPriceElement = document.getElementById('total-price');
+      
+      // Clear cart display
+      cartItems.innerHTML = '';
+      let totalPrice = 0;
+
+      // Tampilkan semua barang di keranjang
+      cart.forEach(item => {
+        const listItem = document.createElement('li');
+        listItem.classList.add('cart-item');
+        listItem.innerHTML = `${item.name} (x${item.quantity}) - Rp ${item.finalPrice} 
+          <button onclick="removeItem(${item.id})">Hapus</button>`;
+        cartItems.appendChild(listItem);
+        totalPrice += item.finalPrice;
+      });
+
+      // Update total harga
+      totalPriceElement.textContent = `Rp ${totalPrice.toLocaleString()}`;
+      calculateChange(); // Update kembalian setelah keranjang diperbarui
+    }
+
+    // Fungsi untuk menghapus barang dari keranjang
+    function removeItem(id) {
+      cart = cart.filter(item => item.id !== id);
+      displayCart();
+      document.getElementById(`qty-barang${id}`).value = 0; // Reset inputan jumlah barang
+    }
+
+    // Fungsi untuk checkout
+    function checkout() {
+      if (cart.length === 0) {
+        alert("Keranjang Anda kosong!");
+      } else {
+        alert("Proses checkout berhasil!");
+        cart = []; // Kosongkan keranjang setelah checkout
+        displayCart(); // Update tampilan setelah checkout
+      }
+    }
+
+    // Fungsi untuk menampilkan input uang pembeli
+    function showPaymentInput() {
+      document.getElementById('payment-section').classList.remove('d-none');
+      document.getElementById('change-display').classList.remove('d-none');
+    }
+
+    // Fungsi untuk menutup input uang pembeli
+    function closePaymentInput() {
+      document.getElementById('payment-section').classList.add('d-none');
+      document.getElementById('change-display').classList.add('d-none');
+    }
+
+    // Fungsi untuk menghitung kembalian
+    function calculateChange() {
+      const totalPrice = cart.reduce((acc, item) => acc + item.finalPrice, 0);
+      const payment = parseFloat(document.getElementById('payment').value) || 0;
+      const change = payment - totalPrice;
+      
+      const changeDisplay = document.getElementById('change-display');
+      if (change >= 0) {
+        changeDisplay.textContent = `Kembalian: Rp ${change.toLocaleString()}`;
+      } else {
+        changeDisplay.textContent = `Uang Tidak Cukup`;
+      }
+    }
+
+    // Fungsi untuk memfilter barang berdasarkan input pencarian
+    function filterProducts() {
+      const searchQuery = document.getElementById('search').value.toLowerCase();
+      const products = document.querySelectorAll('.product-item');
+
+      products.forEach(product => {
+        const productName = product.querySelector('.card-title').textContent.toLowerCase();
+        if (productName.includes(searchQuery)) {
+          product.style.display = '';
+        } else {
+          product.style.display = 'none';
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>
